@@ -221,8 +221,8 @@ mod v2 {
 
     use bdk::bitcoin::Address;
     use bdk::wallet::AddressIndex;
+    use bitcoin_ffi::Network;
     use http::StatusCode;
-    use payjoin_ffi::bitcoin::Network;
     use payjoin_ffi::error::PayjoinError;
     use payjoin_ffi::receive::{PayjoinProposal, Receiver, UncheckedProposal};
     use payjoin_ffi::send::SenderBuilder;
@@ -389,7 +389,7 @@ mod v2 {
             .unwrap()
             .identify_receiver_outputs(|script| is_script_owned(&receiver, script.clone()))
             .expect("Receiver should have at least one output");
-        _ = wants_outputs.substitute_receiver_script(&payjoin_ffi::Script::new(
+        _ = wants_outputs.substitute_receiver_script(&bitcoin_ffi::Script::new(
             receiver.get_address(AddressIndex::New).script_pubkey().into_bytes(),
         ));
         let wants_inputs = wants_outputs.commit_outputs();
@@ -480,7 +480,7 @@ fn is_script_owned(wallet: &Wallet, script: Vec<u8>) -> Result<bool, PayjoinErro
         .map_err(|x| PayjoinError::UnexpectedError { message: x.to_string() })
 }
 
-fn mock_is_output_known(_: payjoin_ffi::OutPoint) -> Result<bool, PayjoinError> {
+fn mock_is_output_known(_: bitcoin_ffi::OutPoint) -> Result<bool, PayjoinError> {
     Ok(false)
 }
 

@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
+use bitcoin_ffi::{Network, OutPoint, Script, TxOut};
+
 use super::InputPair;
 use crate::error::PayjoinError;
-use crate::{
-    ClientResponse, Network, OhttpKeys, OutPoint, PjUriBuilder, Request, Script, TxOut, Url,
-};
+use crate::{ClientResponse, OhttpKeys, PjUriBuilder, Request, Url};
 
 #[derive(Clone, Debug, uniffi::Object)]
 pub struct Receiver(pub super::Receiver);
@@ -185,7 +185,7 @@ impl MaybeInputsOwned {
 
 #[uniffi::export(callback_interface)]
 pub trait IsOutputKnown {
-    fn callback(&self, outpoint: OutPoint) -> Result<bool, PayjoinError>;
+    fn callback(&self, outpoint: Arc<OutPoint>) -> Result<bool, PayjoinError>;
 }
 
 /// Typestate to validate that the Original PSBT has no inputs that have been seen before.
@@ -209,7 +209,7 @@ impl MaybeInputsSeen {
     ) -> Result<Arc<OutputsUnknown>, PayjoinError> {
         self.0
             .clone()
-            .check_no_inputs_seen_before(|outpoint| is_known.callback(outpoint.clone()))
+            .check_no_inputs_seen_before(|outpoint| is_known.callback(Arc::new(outpoint.clone())))
             .map(|t| Arc::new(t.into()))
     }
 }
@@ -381,8 +381,8 @@ impl From<super::PayjoinProposal> for PayjoinProposal {
 
 #[uniffi::export]
 impl PayjoinProposal {
-    pub fn utxos_to_be_locked(&self) -> Vec<OutPoint> {
-        let mut outpoints: Vec<OutPoint> = Vec::new();
+    pub fn utxos_to_be_locked(&self) -> Vec<Arc<OutPoint>> {
+        let mut outpoints: Vec<Arc<OutPoint>> = Vec::new();
         for e in <PayjoinProposal as Into<super::PayjoinProposal>>::into(self.clone())
             .utxos_to_be_locked()
         {
